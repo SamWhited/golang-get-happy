@@ -45,6 +45,12 @@
 \setbeamercolor{title}{fg=black}
 \setbeamercolor{item}{fg=black}
 
+% \setbeamertemplate{background canvas}{%
+% 	\ifnum\c@framenumber=1%
+% 	\color{Navy}\rule{\paperwidth}{\paperheight}%
+% 	\fi
+% }
+
 \setbeamertemplate{mini frames}{}
 
 \setbeamertemplate{section page}{%
@@ -62,6 +68,8 @@
     \end{beamercolorbox}
     \end{centering}
 }
+
+\newcommand{\lmss}{\fontfamily{lmss}\selectfont} % Latin Modern Sans
 
 \mode
 <all>

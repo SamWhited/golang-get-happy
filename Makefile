@@ -7,7 +7,7 @@ DO_XELATEX_WRITE18 = xelatex --shell-escape --interaction=nonstopmode $<  $(REDI
 
 NAME=slides
 $(NAME).pdf: *.tex *.sty
-	$(DO_XELATEX)
-	while ($(DO_XELATEX) ; \
+	$(DO_XELATEX_WRITE18)
+	while ($(DO_XELATEX_WRITE18) ; \
 		grep -q "Rerun to get" $(NAME).log ) do true; \
 		done

@@ -1,27 +1,39 @@
 \PassOptionsToPackage{usenames,dvipsnames}{xcolor}
 \documentclass[xelatex,aspectratio=169]{beamer}
 
-\usepackage{xifthen,multicol,textcomp,graphicx}
+\usepackage{xifthen,multicol,textcomp,graphicx,minted}
 \usepackage{fontspec}
 \usepackage{tikz,amsmath,xmpp}
 \usetikzlibrary{arrows,decorations.pathreplacing}
+\newcommand*{\tikzmark}[1]{\tikz[overlay, remember picture] \coordinate ({#1});}
 
 \usetheme{Atlassian}
 \usecolortheme{whale}
 \beamertemplatenavigationsymbolsempty
 
-\title[]{XMPP}
-\subtitle{Protocol mechanics and common patterns}
+\title[]{Golang}
+\subtitle{(get happy)}
 \author[]{%
 	Sam Whited\\*%
-	{\tiny XSF Editor / HipChat Platform Developer}\\*%
-	{\tiny JID: \texttt{\href{xmpp:sam@samwhited.com}{sam@samwhited.com}}}%
+	{\tiny\texttt{\href{xmpp:sam@samwhited.com}{sam@samwhited.com}}}%
 }
-\date{2015--12--18}
+% \date{2015--12--18}
 \titlegraphic{\includegraphics[width=20mm]{images/hipchat.png}\hspace*{.25\textwidth}\includegraphics[width=20mm]{images/atlassian.png}}
 
 % Define a font family that supports IPA characters.
+\usefonttheme{professionalfonts}
+\usefonttheme{serif}
 \newfontfamily\ipa{Charis SIL}
+\newfontfamily\calluna{Calluna}
+\newfontfamily\geotica{Geotica Three}
+\setmainfont{Circular Pro}
+\newfontfamily\dejavusansmono{DejaVu Sans Mono}
+\setmonofont{DejaVu Sans Mono}
+% \usepackage{newunicodechar}
+% \newunicodechar{└}{\dejavusansmono{└}}
+% \newunicodechar{├}{\dejavusansmono{├}}
+% \newunicodechar{─}{\dejavusansmono{─}}
+% \newunicodechar{│}{\dejavusansmono{│}}
 
 \begin{document}
 
@@ -30,766 +42,229 @@
 \end{frame}
 
 \begin{frame}
-	\ttfamily%
-	The following requirements keywords as used in this document are to be
-	interpreted as described in RFC 2119: "MUST", "SHALL", "REQUIRED"; "MUST NOT",
-	"SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY",
-	"OPTIONAL".
+	\frametitle{The Zen of Go}
+	\only<1>{\setbeamercolor{item}{fg=Violet}}
+	\only<2>{\setbeamercolor{item}{fg=CheetoOrange}}
+	\only<3>{\setbeamercolor{item}{fg=Mauve}}
+	\only<4>{\setbeamercolor{item}{fg=Slate}}
+	\only<5-6>{\setbeamercolor{item}{fg=LimeGreen}}
+	\only<7>{\setbeamercolor{item}{fg=Brown}}
+	\only<8>{\setbeamercolor{item}{fg=BrightPink}}
+	\only<9>{\setbeamercolor{item}{fg=Cyan}}
+	\begin{enumerate}
+		\item<1> Familiarity admits brevity
+		\item<2> Dependency analysis should be easy
+		\item<3> Composition is better than inheritance
+		\item<4> Static linking is better than dynamic linking
+		\item<5-6> If it's worth complaining about, it's worth fixing
+		\item<6> If it's not worth fixing, it's not worth mentioning
+		\item<7> Semicolons are for parsers, not for people
+		\item<8> Long term clarity is better than short term convenience
+		\item<9> Do not communicate by sharing memory, share memory by communicating
+	\end{enumerate}
+	\vspace*{\fill}\hspace*{0.75\textwidth}
+	\vspace*{-4em}
+	\begin{tikzpicture}[remember picture,overlay]
+		\only<1-8>{
+		\node [xshift=-0.25\textwidth,yshift=2.5em] at (current page.south east)
+		{\includegraphics[width=20mm]{images/gopher.png}};}
+		\only<9>{
+		\node [xshift=-0.25\textwidth,yshift=1.5em] at (current page.south east)
+		{\includegraphics[width=20mm]{images/gopher.png}};}
+	\end{tikzpicture}
 \end{frame}
 
 \begin{frame}
-	XMPP is a set of rules for exchanging data between two entities in near-real-time.
-\end{frame}
-
-\begin{frame}
-	\frametitle{Standards}
-	XMPP standardization managed by the IETF. Responsibility for extensions
-	delegated to the XMPP Standards Foundation.
-	\begin{itemize}
-		\item IETF
-		\begin{itemize}
-			\item \xmppcore\\*(XML-RPC, IoT, RSS/Atom streams, etc.)
-			\item \xmppim\ (HipChat!)
-			\item \xmppaddr
-		\end{itemize}
-	\item XSF
-		\begin{itemize}
-			\item \xep[Multi-User Chat]{0045}
-			\item \xep[Stream Management]{0198}
-			\item \xep[Entity Versioning]{0366} (yey)
-			\item \xep[Message Attaching]{0367} (more yey)
-		\item \ldots
-		\end{itemize}
-	\end{itemize}
-\end{frame}
-
-\begin{frame}
-	\frametitle{eXtensible Messaging and Presence Protocol}
-	\framesubtitle{(from 10,000 feet)}
-	\begin{itemize}
-		\item XML streams (not documents)
-		\item Elements with payloads
-			\begin{itemize}
-				\item Stanzas: \textit{message, presence, iq}
-				\item Nonzas: \textit{auth, compress, \ldots}
-			\end{itemize}
-		\item Minimal core spec with extensions defined in XEP's
-		\item Federated network of servers
-	\end{itemize}
-\end{frame}
-
-\begin{frame}
-\begin{quotation}
-	``Extensions are XMPP's greatest strength, and its greatest weakness.''
-	\begin{flushright}
-		--- Pretty much everyone
-	\end{flushright}
-\end{quotation}
-\end{frame}
-
-\begin{frame}
-\begin{center}
-\begin{tikzpicture}[<->,>=stealth',shorten >=1pt,auto,node distance=3cm,
-                    thick,main node/.style={circle,draw,font=\sffamily\Large\bfseries}]
-
-  \node[main node] (1) {Server 1};
-  \node[main node] (2) [below left of=1] {S2};
-  \node[main node] (3) [below right of=2] {S3};
-  \node[main node] (4) [right of=1] {S4};
-
-  \node[main node] (5) [above left of=2] {C};
-  \node[main node] (6) [      left of=2] {C};
-  \node[main node] (7) [below left of=2] {C};
-  \node[main node] (8) [right of=4] {C};
-  \node[main node] (9) [above right of=4] {C};
-  \node[main node] (10) [below right of=1] {C};
-
-  \path[every node/.style={font=\sffamily\small}]
-    (1) edge node [right] {} (10)
-    (2) edge [bend left] node [right] {} (1)
-        edge node [right] {} (5)
-        edge node [right] {} (6)
-        edge node [right] {} (7)
-    (3) edge [bend left] node [right] {} (2)
-        edge [bend right] node [right] {} (1)
-    (4) edge [bend left] node[right] {} (1)
-        edge node [left] {} (8)
-        edge [bend left] node [left] {} (9);
+\def\firstcircle{(0,0) circle (2cm)}
+\def\secondcircle{(60:2.5cm) circle (2cm)}
+\def\thirdcircle{(0:2.5cm) circle (2cm)}
+\begin{figure}[!h]
+\centering
+\begin{tikzpicture}
+	\begin{scope}[shift={(3cm,-5cm)}, fill opacity=0.5]
+		\fill[red] \firstcircle;
+		\fill[green] \secondcircle;
+		\fill[blue] \thirdcircle;
+		\draw \firstcircle node[below] {Ease\hspace*{2em}};
+		\draw \secondcircle node [above] {Compile time};
+		\draw \thirdcircle node [below] {\hspace*{2em}Speed\\*(C)};
+		\node [anchor=center] at (3.25em, 2em)
+		{\includegraphics[width=7mm]{images/golang.png}};
+	\end{scope}
 \end{tikzpicture}
-\end{center}
+\end{figure}
 \end{frame}
 
-\newcommand*{\tikzmark}[1]{\tikz[overlay, remember picture] \coordinate ({#1});}
-
-\begin{frame}
-	\frametitle{Anatomy of a JID}
-	\Large
-	\begin{figure}
-		{\color{Navy}%
-			\tikzmark{begin}viola\tikzmark{atsep}@%
-			\tikzmark{domainpart}shakespeare.lit\tikzmark{slashsep}/%
-			\tikzmark{resourcepart}ilyria\tikzmark{end}%
-		}
-
-		\tikz[overlay,remember picture] {
-			\draw[decorate,decoration={brace,raise=5mm,amplitude=20pt}] (begin.north west) -- node [above=2.5em] {JID} (end.north east) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (begin.south west) -- node[below of=begin, below=-1.25em] {\small localpart} (atsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=10pt,mirror}] (domainpart.south west) -- node[below of=begin, below=-1em] {\small domainpart} (slashsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (resourcepart.south east) -- node[below of=begin, below=-1.25em] {\small resourcepart} (end.south east) ;
-		}
-	\end{figure}
-\end{frame}
-\begin{frame}
-	\frametitle{Anatomy of a JID}
-	\Large
-	\begin{figure}
-		\tikzmark{begin}\textcolor{Violet}{viola}\tikzmark{atsep}@%
-		\tikzmark{domainpart}shakespeare.lit\tikzmark{slashsep}/%
-		\tikzmark{resourcepart}ilyria\tikzmark{end}%
-
-		\tikz[overlay,remember picture] {
-			\draw[decorate,decoration={brace,raise=5mm,amplitude=20pt}] (begin.north west) -- node [above=2.5em] {JID} (end.north east) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (begin.south west) -- node[below of=begin, below=-1.25em] {\small localpart} (atsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=10pt,mirror}] (domainpart.south west) -- node[below of=begin, below=-1em] {\tiny domainpart} (slashsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (resourcepart.south east) -- node[below of=begin, below=-1.25em] {\tiny resourcepart} (end.south east) ;
-		}
-	\end{figure}
-\end{frame}
-\begin{frame}
-	\frametitle{Anatomy of a JID}
-	\Large
-	\begin{figure}
-		\tikzmark{begin}viola\tikzmark{atsep}@%
-		\tikzmark{domainpart}\textcolor{LimeGreen}{shakespeare.lit}\tikzmark{slashsep}/%
-		\tikzmark{resourcepart}ilyria\tikzmark{end}
-
-		\tikz[overlay,remember picture] {
-			\draw[decorate,decoration={brace,raise=5mm,amplitude=20pt}] (begin.north west) -- node [above=2.5em] {JID} (end.north east) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (begin.south west) -- node[below of=begin, below=-1.25em] {\tiny localpart} (atsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=10pt,mirror}] (domainpart.south west) -- node[below of=begin, below=-1em] {\small domainpart} (slashsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (resourcepart.south east) -- node[below of=begin, below=-1.25em] {\tiny resourcepart} (end.south east) ;
-		}
-	\end{figure}
-\end{frame}
-\begin{frame}
-	\frametitle{Anatomy of a JID}
-	\Large
-	\begin{figure}
-		\tikzmark{begin}viola\tikzmark{atsep}@%
-		\tikzmark{domainpart}shakespeare.lit\tikzmark{slashsep}/%
-		\tikzmark{resourcepart}\textcolor{CheetoOrange}{ilyria}\tikzmark{end}
-
-		\tikz[overlay,remember picture] {
-			\draw[decorate,decoration={brace,raise=5mm,amplitude=20pt}] (begin.north west) -- node [above=2.5em] {JID} (end.north east) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (begin.south west) -- node[below of=begin, below=-1.25em] {\tiny localpart} (atsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=10pt,mirror}] (domainpart.south west) -- node[below of=begin, below=-1em] {\tiny domainpart} (slashsep.south west) ;
-			\draw[decorate,decoration={brace,raise=2mm,amplitude=5pt,mirror}] (resourcepart.south east) -- node[below of=begin, below=-1.25em] {\small resourcepart} (end.south east) ;
-		}
-	\end{figure}
-\end{frame}
-
-\section[]{XMPP Core}
-\frame{\sectionpage}
-
-\begin{frame}
-	\frametitle{Stream's}
-	\begin{itemize}
-		\item Client first
-		\item Two streams (input and output)
-		\item Streams are restarted when their state changes (eg. TLS or stream
-			compression is started, feature negotiation happens, etc.)
-		\item Event based and pipelined (async communication)
-	\end{itemize}
-\end{frame}
-
-\subsection[]{Stream Initialization and Feature Negotiation}
-\frame{\subsectionpage}
-
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features}\\
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\vspace*{8em}
-			\xml{starttls \ldots /}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features}\\
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\vspace*{8em}
-			\xml{starttls \ldots /}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features}\\
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\vspace*{8em}
-			\xml{starttls \ldots /}\\
-			\ \\
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace*{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features}\\
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\vspace*{8em}
-			\xml{starttls \ldots /}\\
-			\ \\
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace*{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features}\\
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\vspace*{8em}
-			\xml{starttls \ldots /}\\
-			\ \\
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace*{2em}
-			\procinst\\
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features}\\
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-			\vspace*{4em}
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-	\end{multicols}
-\end{frame}
 {
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\vspace*{5em}
-			\xml{starttls \ldots /}\\
-			\vspace*{2em}
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\xml{starttls \ldots}\\
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-			\vspace*{5em}
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features \ldots}\\
-			\xml{mechanisms \ldots}\\
-			\xml{mechanism}\texttt{SCRAM-SHA-1}\xml*{mechanism}
-			\xml*{mechanisms}\\
-		\end{flushleft}
-	\end{multicols}
+\renewcommand{\fcolorbox}[4][]{#4}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{C}
+// C
+char *(*fp)( int, float *);
+\end{minted}
 \end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\vspace*{4em}
-			\xml{starttls \ldots /}\\
-			\vspace*{2em}
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}\\
-			\vspace*{6em}
-			\xml{auth}
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\xml{required /}\\
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-			\vspace*{5em}
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features \ldots}\\
-			\xml{mechanisms \ldots}\\
-			\xml{mechanism}\texttt{SCRAM-SHA-1}\xml*{mechanism}
-			\xml*{mechanisms}\\
-		\end{flushleft}
-	\end{multicols}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{C}
+     ╭────────────────────╮
+     │ ╭───╮              │
+     │ │╭─╮│              │
+     │ │↑ ││              │
+char *(*fp)( int, float *);
+ ↑   ↑ ↑  ││              │
+ │   │ ╰──╯│              │
+ │   ╰─────╯              │
+ ╰────────────────────────╯
+\end{minted}
 \end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\vspace*{3em}
-			\xml{starttls \ldots /}\\
-			\vspace*{2em}
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}\\
-			\vspace*{5em}
-			\xml{auth}\\
-			\ldots
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\xml*{starttls}\\
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-			\vspace*{5em}
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features \ldots}\\
-			\xml{mechanisms \ldots}\\
-			\xml{mechanism}\texttt{SCRAM-SHA-1}\xml*{mechanism}
-			\xml*{mechanisms}\\
-		\end{flushleft}
-	\end{multicols}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{go}
+// Go
+var fp *func(int64, *float64) (*byte)
+\end{minted}
 \end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\vspace*{2em}
-			\xml{starttls \ldots /}\\
-			\vspace*{2em}
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}\\
-			\vspace*{5em}
-			\xml{auth}\\
-			\ldots\\
-			\ldots
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\xml*{stream:features}\\
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-			\vspace*{5em}
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features \ldots}\\
-			\xml{mechanisms \ldots}\\
-			\xml{mechanism}\texttt{SCRAM-SHA-1}\xml*{mechanism}
-			\xml*{mechanisms}\\
-		\end{flushleft}
-	\end{multicols}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{go}
+    ╭──╮ ╭──╮                  ╭─╮
+    ┴  │ │  │                  │ ↓
+var fp *func(int64, *float64) (*byte)
+       │ ↑  │                  ↑
+       ╰─╯  ╰──────────────────╯
+\end{minted}
 \end{frame}
-\begin{frame}
-	\begin{multicols}{2}
-		\begin{flushleft}
-			\centerline{Client}
-			\vspace*{1em}
-			\xml{starttls \ldots /}\\
-			\vspace*{2em}
-			01000111011001010111010000100000011000100110000101100011011010110010\\
-			00000111010001101111001000000111011101101111011100100110101100101110
-			\xml{stream:stream \ldots}\\
-			\vspace*{5em}
-			\xml{auth}\\
-			\ldots\\
-			\ldots\\
-			\ldots
-		\end{flushleft}
-		\columnbreak
-		\begin{flushleft}
-			\centerline{Server}
-			\vspace*{1em}
-			\xml{proceed \ldots /}\\
-			\vspace*{5em}
-			\xml{stream:stream \ldots}\\
-			\xml{stream:features \ldots}\\
-			\xml{mechanisms \ldots}\\
-			\xml{mechanism}\texttt{SCRAM-SHA-1}\xml*{mechanism}
-			\xml*{mechanisms}\\
-		\end{flushleft}
-	\end{multicols}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{C}
+void (*signal(int, void (*fp)(int)))(int);
+\end{minted}
+\end{frame}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{C}
+      +-----------------------------+
+      │                  +---+      │
+      │  +---+           │+-+│      │
+      │  ↑   │           │↑ ││      │
+void (*signal(int, void (*fp)(int)))(int);
+ ↑    ↑      │      ↑    ↑  ││      │
+ │    +------+      │    +--+│      │
+ │                  +--------+      │
+ +----------------------------------+
+\end{minted}
+\end{frame}
+\begin{frame}[fragile]
+	\frametitle{Declarations}
+\begin{minted}{go}
+var signal func(int, *func(int)) *func(int)
+\end{minted}
 \end{frame}
 }
 
-\begin{frame}
-	\vspace*{\fill}
-	\includegraphics[width=.75\textwidth]{images/deeper.jpg}
-\end{frame}
-
-\subsection[]{Inside the stream}
-\begin{frame}
-\subsectionpage
-\centerline{(post resource binding)}
-\end{frame}
-
-\begin{frame}
-\vspace*{\fill}
-\textbf{Stanza} \ipa{/ˈstænzə/} (\kern1pt\textit{plural} stanzas) n.
-\begin{enumerate}
-	\item A unit of a poem, written or printed as a paragraph; equivalent to a verse.
-	\item (computing) An XML element which acts as basic unit of meaning in XMPP.
-\end{enumerate}
-\vspace*{\fill}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Stanza's}
-	The basic primitives of XMPP.
-	\begin{itemize}
-		\item \stanza{message}
-		\item \stanza{iq}
-		\item \stanza{presence}
-	\end{itemize}
-
-	Generally speaking, these should be the only things sent at the top level of
-	an XMPP stream (with a few exceptions, eg. \xep{0198} keep-alive's).
+{
+\begin{frame}[fragile]
+	\frametitle{Method Signatures}
+\begin{minted}{go}
+func (f *Foo) Location() (float64, float64, error)
+\end{minted}
 \end{frame}
 
 \begin{frame}[fragile]
-	\frametitle{\stanza{message}}
-	\begin{itemize}
-	\item One-to-one
-	\item Fire and forget
-	\item No delivery guarantee (ack)
-	\item Useful for anything that does not require a response (chats, alerts, log lines, etc.)
-	\end{itemize}
-	\begin{lstlisting}[frame=single,language=xml]
-<message id='262' type='chat'
-  to='feste@shakespeare.lit/house'>
-  <body>
-    What&apos;s a drunken man like, fool?
-  </body>
-  <request xmlns='urn:xmpp:receipts'/>
-  <thread>pNltztLMBQhqakHwcFd</thread>
-</message>
-\end{lstlisting}
+	\frametitle{Method Signatures}
+\begin{minted}{go}
+func (f *Foo) Location() (float64, float64, error)
+func (f *Foo) Location() (lat,long float64, err error)
+\end{minted}
 \end{frame}
+}
 
 \begin{frame}[fragile]
-	\frametitle{\stanza{iq} (``Information query'')}
-		\begin{itemize}
-		\item One-to-one
-		\item MUST send a response
-		\item At-least-once delivery (cache and resend if no result)
-		\end{itemize}
-\begin{lstlisting}[frame=single,language=xml]
-<iq from='capulet.lit'
-  to='juliet@capulet.lit/balcony'
-  id='s2c1' type='get'>
-  <ping xmlns='urn:xmpp:ping'/>
-</iq>
+	\frametitle{Example \lmss{№} 3}
+\begin{minted}{go}
+package main
 
-<iq to='capulet.lit'
-  from='juliet@capulet.lit/balcony'
-  id='s2c1' type='result'/>
-\end{lstlisting}
+import (
+  "fmt"
+)
+
+func main() {
+  fmt.Println("Hello Wörld")
+}
+\end{minted}
 \end{frame}
 
-\begin{frame}[fragile]
-	\frametitle{\stanza{presence}}
-	\begin{itemize}
-	\item Directed (one-to-one) or broadcast (one-to-many)
-	\item Advertises entity availability to the network
-	\item Payload's for broadcast can ride along (entity capabilities, status
-		messages, etc.)
-	\end{itemize}
-\begin{lstlisting}[frame=single,language=xml]
-<presence id='24'
-  from='prospero@shakespeare.lit/cell'>
-  <status>
-    Now my charms are all o&apos;erthrown
-  </status>
-  <priority>40</priority>
-  <show>away</show>
-</presence>
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Stanza Types}
-	\begin{flushleft}
-		Messages and presences MAY have a `type' attribute, and IQ's MUST have one.
-		For messages, the type is just a hint.
-	\end{flushleft}
-	\begin{multicols}{3}
-		Message types
-		\begin{itemize}
-			\item\textit{normal}
-			\item\textit{chat}
-			\item\textit{groupchat}
-			\item\textit{headline}
-			\item\textit{error}
-		\end{itemize}
-		\columnbreak
-		IQ types
-		\begin{itemize}
-			\item\textit{get}
-			\item\textit{set}
-			\item\textit{result}
-			\item\textit{error}
-		\end{itemize}
-		\columnbreak
-		Presence types
-		\begin{itemize}
-			\item\textit{unavailable}
-			\item\textit{subscribe}
-			\item\textit{subscribed}
-			\item\textit{unsubscribe}
-			\item\textit{unsubscribed}
-			\item\textit{probe}
-			\item\textit{error}
-		\end{itemize}
-	\end{multicols}
-\end{frame}
-
-\begin{frame}
-\begin{quotation}
-``XMPP is Sacred''
-\begin{flushright}
----\xep[XMPP Design Guidelines]{0134}
-\end{flushright}
-\vspace*{2em}
-When designing a new extension, think very hard about your life before you
-invent new stream level elements, and never modify core protocol.
-\end{quotation}
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{Namespacing}
-	\begin{flushleft}
-		Stanza payloads are handled based on their XML namespace. By recent
-		convention, namespaces are versioned URN's.
-	\end{flushleft}
-\begin{lstlisting}[frame=single,language=xml]
-<message from='juliet@capulet.lit'
-         to='romeo@montague.lit/orchard'
-         type='headline' id='tfasd'>
-  <result xmlns='urn:xmpp:mam:1' queryid='f27'
-          id='5d398-28273-f7382'>
-  ...
-  </result>
-</message>
-\end{lstlisting}
-\end{frame}
-
-\section[]{Useful Extensions}
+\section[]{Concurrency}
 \frame{\sectionpage}
 
 \begin{frame}
-	\frametitle{\xep[Message Carbons]{0280}}
-	\begin{itemize}
-		\item Copies incoming messages to resources that would otherwise not have received the message.
-		\item Copies outgoing messages to your other connected resources
-		\item Current behavior not well defined for special messages (Typing notifications, read state markers, etc.)
-		\item It's simple and gets the job done
-		\item One day might be replaced by\ldots
-	\end{itemize}
-\end{frame}
+	\frametitle{Concurrency}
+	\let\thefootnote\relax
 
-\begin{frame}
-	\frametitle{\xep[Message Archive Management (MAM)]{0313}}
-	\begin{itemize}
-		\item Stores incoming and outgoing messages on server
-		\item New clients can access history
-		\item Clients that have been offline can catch up
-		\item Currently relies on synchronized clocks between client and server (facepalm)
-		\item Work is being done to make it possible to query the archive for
-			messages after a given ID.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}
-	\frametitle{Myth № 1: XMPP is bad on mobile}
-	Turns out that XMPP is actually \emph{very} good on mobile devices, both on
-	battery and bandwidth. Historically, mobile \emph{clients} have been very bad.
-\end{frame}
-
-\begin{frame}[fragile]
-	\frametitle{\xep[Client State Indication (CSI)]{0352}}
-	Clients indicate when they become ``inactive'' (screen goes off, app loses
-	focus, etc.) or ``active'' with some simple nonza's. Server does what it wants
-	with that data (eg. don't send presence or typing notifications and start
-	sending push notifications).
-	\vspace*{\fill}
-\begin{lstlisting}[frame=single,language=xml]
-<active xmlns='urn:xmpp:csi:0'/>
-<inactive xmlns='urn:xmpp:csi:0'/>
-\end{lstlisting}
-\vspace*{\fill}
-\end{frame}
-
-\begin{frame}
-	\frametitle{\xep[Mobile Considerations]{0268}}
 	\begin{flushleft}
-		Attempts to tell you everything you need to know about not eating your
-		users' battery.
+		Like Erlang and friends, Go's concurrency model is based on CSP.
+		\footnote{C. A. R. Hoare: Communicating Sequential Processes (CACM 1978)}
 	\end{flushleft}
+
+\end{frame}
+
+\begin{frame}
+	\frametitle{Concurrency}
+	\centerline{\includegraphics{images/gophercomplex1.jpg}}
 	\begin{flushleft}
-		TL;DR --- Implement CSI, and when you detect that something is already being
-		sent/received: Send/receive as much data as you can at once so the radio can
-		go back to sleep. Compression is also good.
-	\end{flushleft}
-	\begin{flushleft}
-		\emph{Disclaimer:} I wrote this one and it's still in progress; I tried to
-		do my research, but your mileage may vary.
+		Lots of Gophers doing simple tasks such as incinerating their now-obsolete
+		Python documentation (blatantly stolen from Rob Pike).\\
 	\end{flushleft}
 \end{frame}
 
 \begin{frame}
-	\frametitle{\xep[Stream Management]{0198}}
-	\begin{itemize}
-		\item Stream resumption (very fast reconnects)
-		\item Stanza acknowledgements
-	\end{itemize}
-
-	Has some problems around ``zombie state's'' where clients are offline, but the
-	stream hasn't timed out yet. Like most things, the answer is probably MAM.
+	\frametitle{Parallelism is now easy}
+	\centerline{\includegraphics{images/gophercomplex1.jpg}}
+	\centerline{\includegraphics{images/gophercomplex1.jpg}}
 \end{frame}
 
-\newfontfamily\calluna{Calluna}
+% \begin{frame}[fragile]
+% 	\frametitle{Go Routines}
+% \begin{columns}[fragile]
+% \column[t]{0.5\textwidth}
+% \centerline{Go}
+% \begin{minted}{go}
+% 	package main
+% 
+% 	func main() {
+% 	  go func() {
+% 	    select { } // Block forever
+% 	  }()
+% 	  println("A useless goroutine")
+% 	}
+% \end{minted}
+% \column[t]{0.5\textwidth}
+% \centerline{Unix}
+% \begin{minted}{bash}
+% 	./longrunningoperation &
+% 	echo "Process backgrounded"
+% \end{minted}
+% \end{columns}
+% \end{frame}
+
+\begin{frame}
+	\frametitle{Go Routines}
+	\only<1>{\setbeamercolor{item}{fg=Violet}}
+	\only<2>{\setbeamercolor{item}{fg=CheetoOrange}}
+	\only<3>{\setbeamercolor{item}{fg=Mauve}}
+	\only<4>{\setbeamercolor{item}{fg=Slate}}
+	\only<5-6>{\setbeamercolor{item}{fg=LimeGreen}}
+	\only<7>{\setbeamercolor{item}{fg=Brown}}
+	\only<8>{\setbeamercolor{item}{fg=BrightPink}}
+	\only<9>{\setbeamercolor{item}{fg=Cyan}}
+	\begin{enumerate}
+		\item<1> Goroutines are cheap (overhead limited to stack frame allocation)
+		\item<2> Multiplexed onto threads as necessary
+		\item<3> Goroutines do not block other goroutines
+	\end{enumerate}
+\end{frame}
+
 \begin{frame}
 	\Large
 	\calluna

@@ -731,9 +731,9 @@ type stream struct {
 		used for code generation.
 	\end{flushleft}
 \begin{minted}{go}
-	package precis // import "golang.org/x/text/unicode/precis"
+package precis // import "golang.org/x/text/unicode/precis"
 
-	//go:generate go run gen.go gen_trieval.go
+//go:generate go run gen.go gen_trieval.go
 \end{minted}
 \only<2>{%
 	\begin{flushleft}
@@ -746,11 +746,11 @@ type stream struct {
 \begin{frame}[fragile]
 	\frametitle{go get}
 	\begin{flushleft}
-		Downloads and installs Go libraries or utilities to the first place in your
+		Downloads Go libraries or utilities to the first path in your
 		\texttt{\$GOPATH} environment variable. Supports the Bitbucket API!
 	\end{flushleft}
 \begin{minted}{bash}
-	go get bitbucket.org/mellium/go-xmpp # Fetch the 'xmpp' package
+go get bitbucket.org/mellium/go-xmpp # Fetch the 'xmpp' package
 \end{minted}
 \end{frame}
 

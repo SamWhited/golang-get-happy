@@ -551,8 +551,8 @@ bc := make(chan int, 2) // Buffered channel of ints (size 2)
 
 <-c   // Blocks until something is pushed to C
 bc<-1 // Push to bc
-bc<-1 // Push to bc (buffer is now full)
-bc<-1 // Blocks until something is popped from bc
+bc<-2 // Push to bc (buffer is now full)
+bc<-3 // Blocks until something is popped from bc
 \end{minted}
 \begin{flushleft}
 	Like pipes in Unix, except channels are unbuffered by default.
@@ -637,6 +637,7 @@ func Serve(queue chan *Request) {
 		\item go get
 		\item go list
 		\item go vet
+		\item go test
 	\end{itemize}
 \end{frame}
 
@@ -761,12 +762,12 @@ go get bitbucket.org/mellium/go-xmpp # Fetch the 'xmpp' package
 		incredibly useful.
 	\end{flushleft}
 \begin{minted}{bash}
-( echo "digraph G {"; \
-  go list -f '{{range .Imports}}{{printf "\t%q -> %q;\n" \
-    $.ImportPath .}}{{end}}' \
-    $(go list -f '{{join .Deps " "}}' precis) precis; \
-  echo "}";
-) | dot -Tsvg -o $@
+% ( echo "digraph G {"; \
+%   go list -f '{{range .Imports}}{{printf "\t%q -> %q;\n" \
+%     $.ImportPath .}}{{end}}' \
+%     $(go list -f '{{join .Deps " "}}' precis) precis; \
+%   echo "}";
+% ) | dot -Tsvg -o $@
 \end{minted}
 \end{frame}
 
@@ -792,6 +793,19 @@ go get bitbucket.org/mellium/go-xmpp # Fetch the 'xmpp' package
 \begin{frame}
 \frametitle{go tool}
 \centerline{\includegraphics[width=0.75\textwidth]{images/tools.png}}
+\end{frame}
+
+\begin{frame}
+	\frametitle{go test}
+	\begin{flushleft}
+		Go has a testing and benchmarking package built in.
+	\end{flushleft}
+	\begin{itemize}
+		\item Tests reside in the same package as the thing they're testing.
+		\item Tests are not linked in when building by default.
+		\item The test tool is just a shortcut to build a special test app with your code/tests linked in.
+		\item Test binaries easy to debug with GDB or your favorite debugger.
+	\end{itemize}
 \end{frame}
 
 \begin{frame}

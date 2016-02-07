@@ -103,10 +103,14 @@
 \end{frame}
 
 \begin{frame}
-	\frametitle{The Zen of \xcancel{Python} Go}
+	\only<1>{\frametitle{The Zen of Python}}
+	\only<2->{\frametitle{The Zen of \xcancel{Python} Go}}
 	\begin{tikzpicture}[remember picture,overlay]
 		\node [xshift=-0.25\textwidth,yshift=-10em] at (current page.north east)
-		{\includegraphics[width=7em]{images/flyinggopher.jpg}};
+		{%
+			\only<1>{\includegraphics[width=7em]{images/python.png}}%
+			\only<2->{\includegraphics[width=7em]{images/flyinggopher.jpg}}%
+		};
 	\end{tikzpicture}
 	\tiny
 	% \defbeamertemplate{itemize item}{circle}{\tiny\raise0.5pt\hbox{\textbullet}}
@@ -118,14 +122,14 @@
 		\item Complex is better than complicated.
 		\item Flat is better than nested.
 		\item Sparse is better than dense.
-		\item Readability counts.
+		\item \only<1-2>{Readability counts.}\only<3>{{\small Readability counts.}}
 		\item Special cases aren't special enough to break the rules.
 		\item Although practicality beats purity.
 		\item Errors should never pass silently.
 		\item Unless explicitly silenced.
 		\item In the face of ambiguity, refuse the temptation to guess.
 		\item There should be one---and preferably only one---obvious way to do it.
-		\item Although that way may not be obvious at first unless you're \cancel{Dutch} Rob Pike.
+		\item Although that way may not be obvious at first unless you're \only<1>{Dutch}\only<2->{\cancel{Dutch} Rob Pike}.
 		\item Now is better than never.
 		\item Although never is often better than \emph{right} now.
 		\item If the implementation is hard to explain, it's a bad idea.

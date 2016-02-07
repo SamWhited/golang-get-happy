@@ -297,7 +297,7 @@ func (u GeoURI) Location() (lat,long float64, err error)
 \end{minted}
 \begin{flushleft}
 	Return types may be named, no more boolean traps (yey)!
-	\only<2->{\\Also note that lat,long take the same type; let's not be redundant and repeat ourselves!}
+	\only<2->{\\Also note that lat, long take the same type; let's not be redundant and repeat ourselves!}
 \end{flushleft}
 \only<3->{%
 \begin{flushleft}
@@ -614,7 +614,7 @@ func main() {
 	Use buffered channels.
 \tiny
 \begin{minted}[frame=single]{go}
-var sem = make(chan int, MaxOutstanding)
+var sem = make(chan int, MaxRequests)
 
 func Serve(queue chan *Request) {
   for req := range queue {
@@ -686,7 +686,7 @@ type JID interface {
 \begin{frame}[fragile]
 	\frametitle{go fix}
 	\begin{flushleft}
-		The `Compatibility Promise` ensures that no API's will ever break in the
+		The `Compatibility Promise' ensures that no API's will ever break in the
 		standard library. This doesn't apply to experimental packages. The `fix'
 		tool rewrites your code to use newer API's when major updates happen.
 	\end{flushleft}
@@ -700,7 +700,7 @@ import (
 \begin{frame}[fragile]
 	\frametitle{go fix}
 	\begin{flushleft}
-		The `Compatibility Promise` ensures that no API's will ever break in the
+		The `Compatibility Promise' ensures that no API's will ever break in the
 		standard library. This doesn't apply to experimental packages. The `fix'
 		tool rewrites your code to use newer API's when major updates happen.
 	\end{flushleft}
@@ -761,7 +761,7 @@ type stream struct {
 		used for code generation.
 	\end{flushleft}
 \begin{minted}{go}
-package precis // import "golang.org/x/text/unicode/precis"
+package precis // import "golang.org/x/text/secure/precis"
 
 //go:generate go run gen.go gen_trieval.go
 \end{minted}
@@ -780,7 +780,7 @@ package precis // import "golang.org/x/text/unicode/precis"
 		\texttt{\$GOPATH} environment variable. Supports the Bitbucket API!
 	\end{flushleft}
 \begin{minted}{bash}
-go get bitbucket.org/mellium/go-xmpp # Fetch the 'xmpp' package
+go get bitbucket.org/mellium/xmpp # Fetch the 'xmpp' package
 \end{minted}
 \end{frame}
 

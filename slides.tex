@@ -8,6 +8,13 @@
 \usetikzlibrary{arrows,decorations.pathreplacing}
 \newcommand*{\tikzmark}[1]{\tikz[overlay, remember picture] \coordinate ({#1});}
 
+\newcommand\blfootnote[1]{%
+	\begingroup
+	\renewcommand\thefootnote{}\footnote{#1}%
+	% \addtocounter{footnote}{-1}%
+	\endgroup
+}
+
 \usetheme{Atlassian}
 \usecolortheme{whale}
 \beamertemplatenavigationsymbolsempty
@@ -125,6 +132,7 @@
 		\item If the implementation is easy to explain, it may be a good idea.
 		\item Namespaces are one honking great idea --- let's do more of those!
 	\end{itemize}
+	\blfootnote{http://talks.golang.org/2012/zen.slide}
 \end{frame}
 
 \begin{frame}
@@ -429,16 +437,22 @@ var signal func(int, *func(int)) *func(int)
 ───██▄░░░░░░░░░░░░░░░░░░░░░▄██────\\
 ────▀██▄░░░░░░░░░░░░░░░░░▄██▀─────\\
 ──────▀███████████████████▀───────\\
-}
-``Simplicity is the art of hiding complexity'' ---Rob Pike (again)\\
+}\\
 Go is very complex, but very good at hiding it.\\
 \end{centering}
+\end{frame}
+
+\begin{frame}
+	\begin{fancyquote}[Rob Pike (again)]
+		Simplicity is the art of hiding complexity
+	\end{fancyquote}
 \end{frame}
 
 \begin{frame}
 	\begin{fancyquote}
 		\useligatures{Simplicity is complicated.}
 	\end{fancyquote}
+	\blfootnote{http://talks.golang.org/2014/compiling.slide}
 \end{frame}
 
 \begin{frame}

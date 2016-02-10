@@ -9,3 +9,4 @@
 *.sw[op]
 *.pyg
 *.xwm
+_minted-slides/

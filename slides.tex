@@ -820,9 +820,16 @@ go get bitbucket.org/mellium/xmpp # Fetch the 'xmpp' package
 \end{frame}
 
 \begin{frame}
+\frametitle{go tool}
+\centerline{\includegraphics[width=0.75\textwidth]{images/tools.png}}
+\end{frame}
+
+\begin{frame}
 	\frametitle{go test}
 	\begin{flushleft}
-		Built in tool for testing.
+		Go has a testing and benchmarking package built in.
+	\end{flushleft}
+	\begin{flushleft}
 	\begin{itemize}[<+(1)->]
 			\item Unit/integration testing
 			\item Benchmarks
@@ -835,24 +842,6 @@ go get bitbucket.org/mellium/xmpp # Fetch the 'xmpp' package
 			\end{itemize}
 	\end{itemize}
 	\end{flushleft}
-\end{frame}
-
-\begin{frame}
-\frametitle{go tool}
-\centerline{\includegraphics[width=0.75\textwidth]{images/tools.png}}
-\end{frame}
-
-\begin{frame}
-	\frametitle{go test}
-	\begin{flushleft}
-		Go has a testing and benchmarking package built in.
-	\end{flushleft}
-	\begin{itemize}
-		\item Tests reside in the same package as the thing they're testing.
-		\item Tests are not linked in when building by default.
-		\item The test tool is just a shortcut to build a special test app with your code/tests linked in.
-		\item Test binaries easy to debug with GDB or your favorite debugger.
-	\end{itemize}
 \end{frame}
 
 \begin{frame}

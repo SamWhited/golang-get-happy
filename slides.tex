@@ -686,9 +686,10 @@ type JID interface {
 \begin{frame}[fragile]
 	\frametitle{go fix}
 	\begin{flushleft}
-		The `Compatibility Promise' ensures that no API's will ever break in the
-		standard library. This doesn't apply to experimental packages. The `fix'
-		tool rewrites your code to use newer API's when major updates happen.
+		The `Compatibility Promise'\footnote{https://tip.golang.org/doc/go1compat}
+		ensures that no API's will ever break in the standard library. This doesn't
+		apply to experimental packages or to `syscall'. The `fix' tool rewrites your
+		code to use newer API's when major updates happen.
 	\end{flushleft}
 \begin{minted}{go}
 import (
@@ -700,9 +701,10 @@ import (
 \begin{frame}[fragile]
 	\frametitle{go fix}
 	\begin{flushleft}
-		The `Compatibility Promise' ensures that no API's will ever break in the
-		standard library. This doesn't apply to experimental packages. The `fix'
-		tool rewrites your code to use newer API's when major updates happen.
+		The `Compatibility Promise'\footnote{https://tip.golang.org/doc/go1compat}
+		ensures that no API's will ever break in the standard library. This doesn't
+		apply to experimental packages or to `syscall'. The `fix' tool rewrites your
+		code to use newer API's when major updates happen.
 	\end{flushleft}
 \begin{minted}{go}
 import (

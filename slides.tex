@@ -8,12 +8,9 @@
 \usetikzlibrary{arrows,decorations.pathreplacing}
 \newcommand*{\tikzmark}[1]{\tikz[overlay, remember picture] \coordinate ({#1});}
 
-\newcommand\blfootnote[1]{%
-	\begingroup
-	\renewcommand\thefootnote{}\footnote{#1}%
-	% \addtocounter{footnote}{-1}%
-	\endgroup
-}
+\makeatletter
+\def\blfootnote{\xdef\@thefnmark{}\@footnotetext}
+\makeatother
 
 \usetheme{Atlassian}
 \usecolortheme{whale}
@@ -651,8 +648,8 @@ func Serve(queue chan *Request) {
 \begin{frame}
 	\begin{flushleft}
 		One of the best things about is its tooling.
-		\blfootnote{https://godoc.org/golang.org/x/tools}
 	\end{flushleft}
+	\blfootnote{https://godoc.org/golang.org/x/tools}
 	\begin{itemize}
 		\item go doc
 		\item go fix

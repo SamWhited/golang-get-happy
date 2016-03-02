@@ -611,7 +611,7 @@ func main() {
 	Use buffered channels.
 \tiny
 \begin{minted}[frame=single]{go}
-var sem = make(chan int, MaxRequests)
+sem := make(chan int, MaxRequests)
 
 func Serve(queue chan *Request) {
   for req := range queue {

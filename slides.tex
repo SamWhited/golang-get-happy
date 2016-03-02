@@ -626,6 +626,27 @@ func Serve(queue chan *Request) {
 \end{minted}
 \end{frame}
 
+\begin{frame}[fragile]
+	\frametitle{Need timeouts?}
+	Use select.
+\tiny
+\begin{minted}[frame=single]{go}
+timeout := 3 * time.Second
+
+func RunInfiniteLoopWithTimeout() {
+  for {
+    select {
+    default:
+      // Do some long running loop…
+    case <-time.After(timeout):
+      log.Println("Request timed out…")
+      return
+    }
+  }
+}
+\end{minted}
+\end{frame}
+
 \begin{frame}
 	Go is a bit like Python:
 	\begin{itemize}

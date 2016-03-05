@@ -507,10 +507,7 @@ func многоGophers(w http.ResponseWriter, req *http.Request) {
 
 func main() {
   http.HandleFunc("/", многоGophers)
-  err := http.ListenAndServe("localhost:12345", nil)
-  if err != nil {
-    log.Fatal("ListenAndServe: ", err)
-  }
+  log.Fatal(http.ListenAndServe("localhost:12345", nil))
 }
 \end{minted}
 \end{frame}

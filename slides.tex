@@ -259,6 +259,7 @@ func (GeoURI) Location() (float64, float64, error) {…}
 \begin{itemize}
 	\item Methods \emph{are} functions
 	\item Receiver is just an argument (like Python), no `this' or other magic
+	\item Unlike Python, the receiver is explicit (special syntax, not special behavior)
 	\item Although the receiver can be unnamed
 \end{itemize}
 \end{frame}
@@ -271,6 +272,7 @@ func (u GeoURI) Location() (float64, float64, error) {…}
 \begin{itemize}
 	\item Methods \emph{are} functions
 	\item Receiver is just an argument (like Python), no `this' or other magic
+	\item Unlike Python, the receiver is explicit (special syntax, not special behavior)
 	\item Although the receiver can be unnamed
 	\item Any type may have methods (struct, interface, strings, func pointers\ldots)
 \end{itemize}
